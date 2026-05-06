@@ -213,15 +213,12 @@ async function generateWithOpenAI(prompt, count, subject, topic, difficulty, mar
 }
 // Google Gemini API Call (Fixed & Robust Version)
 async function generateWithGemini(prompt, count, subject, topic, difficulty, marksPerQuestion, types) {
-    // Stable v1 endpoint jo har nayi key ke saath chalta hai
+    // Stable v1 endpoint
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_CONFIG.apiKey}`;
 
     const requestBody = {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-            temperature: 0.7,
-            responseMimeType: "application/json"
-        }
+        contents: [{ parts: [{ text: prompt }] }]
+        // Humne generationConfig hata diya taaki "Unknown name" wala error na aaye
     };
 
     try {
@@ -235,9 +232,11 @@ async function generateWithGemini(prompt, count, subject, topic, difficulty, mar
         if (!response.ok) throw new Error(data.error?.message || "API Error");
 
         let content = data.candidates[0].content.parts[0].text;
+        // Cleaning markdown
         content = content.replace(/```json/g, '').replace(/```/g, '').trim();
         
-        return JSON.parse(content).map((q, index) => ({
+        const questionsData = JSON.parse(content);
+        return questionsData.map((q, index) => ({
             id: index + 1,
             text: q.text,
             options: q.options || [],
@@ -245,7 +244,7 @@ async function generateWithGemini(prompt, count, subject, topic, difficulty, mar
             difficulty, marks: marksPerQuestion, subject, topic
         }));
     } catch (e) {
-        console.error("Gemini Error:", e);
+        console.error("Gemini Final Error:", e);
         throw e;
     }
 }
