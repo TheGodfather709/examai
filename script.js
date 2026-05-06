@@ -10,7 +10,7 @@ const navMenu = document.getElementById('navMenu');
 // API Configuration (Add your API key)
 const API_CONFIG = {
     provider: 'gemini', // or 'gemini' or 'huggingface'
-    apiKey: 'AIzaSyBge2mmJu7ndKa2rv1OnIjK0lp-kvfEK7M', // Set in browser console: window.setAPIKey('your-key')
+    apiKey: '', // Set in browser console: window.setAPIKey('your-key')
     baseURL: {
         openai: 'https://api.openai.com/v1',
         gemini: 'https://generativelanguage.googleapis.com/v1beta',
@@ -213,48 +213,39 @@ async function generateWithOpenAI(prompt, count, subject, topic, difficulty, mar
 }
 // Google Gemini API Call (Fixed & Robust Version)
 async function generateWithGemini(prompt, count, subject, topic, difficulty, marksPerQuestion, types) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_CONFIG.apiKey}`;
+    // Stable v1 endpoint jo har nayi key ke saath chalta hai
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_CONFIG.apiKey}`;
 
     const requestBody = {
-        contents: [{
-            parts: [{
-                text: prompt
-            }]
-        }]
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+            temperature: 0.7,
+            responseMimeType: "application/json"
+        }
     };
 
     try {
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)
         });
 
         const data = await response.json();
-
-        if (!response.ok) {
-            console.error("Gemini Details:", data);
-            throw new Error(data.error?.message || "Status 400: Request Format Issue");
-        }
+        if (!response.ok) throw new Error(data.error?.message || "API Error");
 
         let content = data.candidates[0].content.parts[0].text;
         content = content.replace(/```json/g, '').replace(/```/g, '').trim();
         
-        const questionsData = JSON.parse(content);
-        return questionsData.map((q, index) => ({
+        return JSON.parse(content).map((q, index) => ({
             id: index + 1,
             text: q.text,
             options: q.options || [],
             type: q.type || types[0],
-            difficulty: difficulty,
-            marks: marksPerQuestion,
-            subject: subject,
-            topic: topic
+            difficulty, marks: marksPerQuestion, subject, topic
         }));
     } catch (e) {
-        console.error("Final Error Trace:", e);
+        console.error("Gemini Error:", e);
         throw e;
     }
 }
