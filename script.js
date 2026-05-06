@@ -21,7 +21,18 @@ const API_CONFIG = {
 // Set API Key from user
 window.setAPIKey = function(key) {
     API_CONFIG.apiKey = key;
-    console.log('API Key set successfully!');
+    console.log('✅ API Key set successfully!');
+    console.log('Provider:', API_CONFIG.provider);
+};
+
+// Set API Provider
+window.setProvider = function(provider) {
+    if (['openai', 'gemini', 'huggingface'].includes(provider)) {
+        API_CONFIG.provider = provider;
+        console.log('✅ Provider changed to:', provider);
+    } else {
+        console.log('❌ Invalid provider. Use: openai, gemini, or huggingface');
+    }
 };
 
 // Event Listeners
@@ -60,21 +71,38 @@ async function generateExamPaper() {
         return;
     }
 
+    // Calculate time (2 minutes per mark as standard)
+    const timeLimit = Math.round(marks / 50 * 180);
+    const marksPerQuestion = Math.floor(marks / numQuestions);
+
     // Check if API Key is set
     if (!API_CONFIG.apiKey) {
-        alert('⚠️ API Key not set!\n\nTo use AI question generation:\n1. Get an API key from OpenAI, Google Gemini, or Hugging Face\n2. Run in console: window.setAPIKey("your-api-key")\n\nFor now, using template-based questions.');
-        generateExamPaperWithTemplates(subject, grade, topic, numQuestions, difficulty, marks, questionTypes);
+        console.warn('⚠️ No API Key set. Using template-based questions.');
+        alert('⚠️ API Key not set!\n\nTo use AI:\n1. Get API key from OpenAI, Google Gemini, or Hugging Face\n2. Run in console: window.setAPIKey("your-key")\n\nFor now, using template questions.');
+        generateWithTemplates(subject, grade, topic, numQuestions, difficulty, marks, questionTypes, timeLimit, marksPerQuestion);
         return;
     }
 
-    // Show loading message
-    const loader = showLoadingMessage('🤖 Generating questions with AI...');
+    // Show loading indicator
+    examPaperSection.style.display = 'block';
+    examPaper.innerHTML = `
+        <div style="text-align: center; padding: 60px 20px;">
+            <div style="font-size: 48px; margin-bottom: 20px;">🤖</div>
+            <p style="font-size: 18px; color: #1e3a8a; font-weight: bold;">Generating questions with AI...</p>
+            <div style="margin-top: 20px;">
+                <div style="width: 40px; height: 40px; margin: 0 auto; border: 4px solid #e5e7eb; border-top: 4px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            </div>
+            <p style="font-size: 14px; color: #6b7280; margin-top: 15px;">This may take 3-5 seconds...</p>
+        </div>
+        <style>
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+    `;
 
     try {
-        // Calculate time (2 minutes per mark as standard)
-        const timeLimit = Math.round(marks / 50 * 180); // 180 minutes for 100 marks
-        const marksPerQuestion = Math.floor(marks / numQuestions);
-
         // Generate questions using AI
         const questions = await generateQuestionsWithAI(
             numQuestions, 
@@ -88,20 +116,19 @@ async function generateExamPaper() {
 
         // Create and display exam paper
         createExamPaper(subject, grade, topic, numQuestions, difficulty, marks, timeLimit, questions);
-        
-        // Remove loader
-        if (loader) loader.remove();
     } catch (error) {
         console.error('Error generating questions:', error);
-        if (loader) loader.remove();
-        alert('❌ Error generating questions. Please check your API key and try again.\n\nError: ' + error.message);
-        generateExamPaperWithTemplates(subject, grade, topic, numQuestions, difficulty, marks, questionTypes);
+        alert('❌ Error generating questions with AI:\n\n' + error.message + '\n\nUsing template questions instead.');
+        generateWithTemplates(subject, grade, topic, numQuestions, difficulty, marks, questionTypes, timeLimit, marksPerQuestion);
     }
 }
 
 // Generate Questions Using AI
 async function generateQuestionsWithAI(count, subject, topic, difficulty, types, marksPerQuestion, grade) {
     const prompt = buildPrompt(count, subject, topic, difficulty, types, grade);
+    
+    console.log('📤 Sending request to:', API_CONFIG.provider);
+    console.log('📝 Prompt:', prompt.substring(0, 100) + '...');
     
     if (API_CONFIG.provider === 'openai') {
         return await generateWithOpenAI(prompt, count, subject, topic, difficulty, marksPerQuestion, types);
@@ -124,24 +151,26 @@ function buildPrompt(count, subject, topic, difficulty, types, grade) {
 
 Requirements:
 1. Each question should be unique and original
-2. Difficulty should match the specified level
-3. Mix different question types as specified
-4. Make questions suitable for students at ${grade} level
-5. Questions should be realistic and educational
+2. Make questions realistic and educational
+3. Difficulty should match the specified level
+4. Questions must be suitable for ${grade} students
+5. Each question should test understanding, not just memorization
 
 For MCQ questions, provide 4 options (A, B, C, D).
-Return the response as a JSON array with this format:
+
+Return ONLY a JSON array in this exact format:
 [
-  {"text": "Question text here", "type": "MCQ", "difficulty": "${difficulty}", "options": ["A) Option1", "B) Option2", "C) Option3", "D) Option4"]},
-  {"text": "Question text here", "type": "Short Answer", "difficulty": "${difficulty}"}
+  {"text": "Question text here", "type": "MCQ", "options": ["A) Option1", "B) Option2", "C) Option3", "D) Option4"]},
+  {"text": "Question text here", "type": "Short Answer"},
+  {"text": "Question text here", "type": "Long Answer"}
 ]
 
-Return ONLY valid JSON, no other text.`;
+IMPORTANT: Return ONLY the JSON array, no other text.`;
 }
 
 // OpenAI API Call
 async function generateWithOpenAI(prompt, count, subject, topic, difficulty, marksPerQuestion, types) {
-    const response = await fetch(`${API_CONFIG.baseURL.openai}/chat/completions`, {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${API_CONFIG.apiKey}`,
@@ -151,17 +180,19 @@ async function generateWithOpenAI(prompt, count, subject, topic, difficulty, mar
             model: 'gpt-3.5-turbo',
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.7,
-            max_tokens: 4000
+            max_tokens: 3000
         })
     });
 
     if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error?.message || 'OpenAI API error');
+        throw new Error(`OpenAI Error: ${error.error?.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
     const content = data.choices[0].message.content;
+    
+    console.log('📥 Raw response:', content.substring(0, 200) + '...');
     
     try {
         const questionsData = JSON.parse(content);
@@ -176,14 +207,14 @@ async function generateWithOpenAI(prompt, count, subject, topic, difficulty, mar
             options: q.options || []
         }));
     } catch (e) {
-        console.error('Failed to parse AI response:', content);
-        throw new Error('Invalid AI response format');
+        console.error('Parse error:', e);
+        throw new Error('Failed to parse AI response. Received: ' + content.substring(0, 200));
     }
 }
 
 // Google Gemini API Call
 async function generateWithGemini(prompt, count, subject, topic, difficulty, marksPerQuestion, types) {
-    const response = await fetch(`${API_CONFIG.baseURL.gemini}/models/gemini-pro:generateContent?key=${API_CONFIG.apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_CONFIG.apiKey}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -197,11 +228,13 @@ async function generateWithGemini(prompt, count, subject, topic, difficulty, mar
 
     if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error?.message || 'Gemini API error');
+        throw new Error(`Gemini Error: ${error.error?.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
     const content = data.candidates[0].content.parts[0].text;
+    
+    console.log('📥 Raw response:', content.substring(0, 200) + '...');
     
     try {
         const questionsData = JSON.parse(content);
@@ -216,14 +249,14 @@ async function generateWithGemini(prompt, count, subject, topic, difficulty, mar
             options: q.options || []
         }));
     } catch (e) {
-        console.error('Failed to parse AI response:', content);
-        throw new Error('Invalid AI response format');
+        console.error('Parse error:', e);
+        throw new Error('Failed to parse AI response. Received: ' + content.substring(0, 200));
     }
 }
 
 // Hugging Face API Call
 async function generateWithHuggingFace(prompt, count, subject, topic, difficulty, marksPerQuestion, types) {
-    const response = await fetch(`${API_CONFIG.baseURL.huggingface}/chat/completions`, {
+    const response = await fetch('https://api-inference.huggingface.co/v1/chat/completions', {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${API_CONFIG.apiKey}`,
@@ -232,17 +265,19 @@ async function generateWithHuggingFace(prompt, count, subject, topic, difficulty
         body: JSON.stringify({
             model: 'mistralai/Mistral-7B-Instruct-v0.2',
             messages: [{ role: 'user', content: prompt }],
-            max_tokens: 4000
+            max_tokens: 3000
         })
     });
 
     if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Hugging Face API error');
+        throw new Error(`Hugging Face Error: ${error.error || 'Unknown error'}`);
     }
 
     const data = await response.json();
     const content = data.choices[0].message.content;
+    
+    console.log('📥 Raw response:', content.substring(0, 200) + '...');
     
     try {
         const questionsData = JSON.parse(content);
@@ -257,15 +292,13 @@ async function generateWithHuggingFace(prompt, count, subject, topic, difficulty
             options: q.options || []
         }));
     } catch (e) {
-        console.error('Failed to parse AI response:', content);
-        throw new Error('Invalid AI response format');
+        console.error('Parse error:', e);
+        throw new Error('Failed to parse AI response. Received: ' + content.substring(0, 200));
     }
 }
 
 // Fallback: Generate with Templates
-function generateExamPaperWithTemplates(subject, grade, topic, numQuestions, difficulty, marks, questionTypes) {
-    const timeLimit = Math.round(marks / 50 * 180);
-    const marksPerQuestion = Math.floor(marks / numQuestions);
+function generateWithTemplates(subject, grade, topic, numQuestions, difficulty, marks, questionTypes, timeLimit, marksPerQuestion) {
     const questions = generateQuestions(numQuestions, subject, topic, difficulty, questionTypes, marksPerQuestion);
     createExamPaper(subject, grade, topic, numQuestions, difficulty, marks, timeLimit, questions);
 }
@@ -321,12 +354,12 @@ function createExamPaper(subject, grade, topic, numQuestions, difficulty, marks,
     // Add questions
     questions.forEach((question, index) => {
         const difficultyClass = `difficulty-${question.difficulty.toLowerCase()}`;
-        let answerSpace = getAnswerSpaceText(question.type);
-        
-        // Add MCQ options if available
         let optionsHTML = '';
+        
         if (question.options && question.options.length > 0) {
-            optionsHTML = `<div class="mcq-options">${question.options.join(' | ')}</div>`;
+            optionsHTML = `<div class="mcq-options" style="background: #f0f4ff; padding: 12px; margin-top: 8px; border-radius: 6px; border-left: 3px solid #3b82f6;">
+                ${question.options.join(' | ')}
+            </div>`;
         }
         
         paperHTML += `
@@ -342,18 +375,16 @@ function createExamPaper(subject, grade, topic, numQuestions, difficulty, marks,
                     <span class="difficulty-badge" style="background: #dbeafe; color: #1e40af;">${question.type}</span>
                 </div>
                 <div class="answer-space">
-                    ${answerSpace}
+                    ${getAnswerSpaceText(question.type)}
                 </div>
             </div>
         `;
 
-        // Add page break after every 5 questions
         if ((index + 1) % 5 === 0 && index + 1 !== questions.length) {
             paperHTML += '<div class="page-break">--- Page Break ---</div>';
         }
     });
 
-    // Add footer
     paperHTML += `
         <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #1e3a8a; text-align: center; color: #6b7280;">
             <p><strong>Generated by ExamAI</strong></p>
@@ -364,28 +395,9 @@ function createExamPaper(subject, grade, topic, numQuestions, difficulty, marks,
     examPaper.innerHTML = paperHTML;
     examPaperSection.style.display = 'block';
 
-    // Scroll to exam paper
     setTimeout(() => {
         examPaperSection.scrollIntoView({ behavior: 'smooth' });
     }, 100);
-}
-
-// Show Loading Message
-function showLoadingMessage(message) {
-    const loader = document.createElement('div');
-    loader.className = 'ai-loader';
-    loader.innerHTML = `
-        <div style="text-align: center; padding: 40px;">
-            <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
-            <p style="font-size: 16px; color: #333;">${message}</p>
-            <div style="margin-top: 15px;">
-                <div class="spinner"></div>
-            </div>
-        </div>
-    `;
-    examPaperSection.style.display = 'block';
-    examPaperSection.parentElement.insertBefore(loader, examPaperSection);
-    return loader;
 }
 
 // Generate Questions (Template Fallback)
@@ -396,20 +408,17 @@ function generateQuestions(count, subject, topic, difficulty, types, marksPerQue
     for (let i = 0; i < count; i++) {
         const type = types[i % types.length];
         const template = questionTemplates[i % questionTemplates.length];
-        const difficultyLevel = difficulty;
 
-        let questionText = template;
         let options = null;
-        
         if (type === 'MCQ') {
             options = ['A) Option 1', 'B) Option 2', 'C) Option 3', 'D) Option 4'];
         }
 
         questions.push({
             id: i + 1,
-            text: questionText,
+            text: template,
             type: type,
-            difficulty: difficultyLevel,
+            difficulty: difficulty,
             marks: marksPerQuestion,
             subject: subject,
             topic: topic,
@@ -492,9 +501,7 @@ function downloadExamPaper() {
         jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
     };
 
-    // If html2pdf library is not available, use simple method
     if (typeof html2pdf === 'undefined') {
-        // Fallback: Create a simple text version
         const content = element.innerText;
         const blob = new Blob([content], { type: 'text/plain' });
         const url = window.URL.createObjectURL(blob);
@@ -525,7 +532,6 @@ function saveExamData(data) {
     try {
         let exams = JSON.parse(localStorage.getItem('generatedExams')) || [];
         exams.push(data);
-        // Keep only last 10 exams
         if (exams.length > 10) {
             exams = exams.slice(-10);
         }
@@ -537,6 +543,9 @@ function saveExamData(data) {
 
 // Initialize
 window.addEventListener('load', function() {
-    console.log('ExamAI loaded successfully!');
-    console.log('To use AI: window.setAPIKey("your-api-key")');
+    console.log('✅ ExamAI loaded successfully!');
+    console.log('📖 To use AI:');
+    console.log('1. Get API key from: OpenAI, Google Gemini, or Hugging Face');
+    console.log('2. In console, run: window.setAPIKey("your-api-key")');
+    console.log('3. Or switch provider: window.setProvider("gemini")');
 });
