@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamAI - Generate Exam Papers in Seconds</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .exam-paper { 
+            background: white; 
+            box-shadow: 0 20px 25px -5px rgba(0, 0,0, 0.1), 0 10px 10px -5px rgba(0, 0,0, 0.04);
+            max-width: 210mm; 
+            margin: 0 auto;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .exam-paper { box-shadow: none; margin: 0; }
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-brain text-2xl text-blue-600 mr-3"></i>
+                    <span class="text-2xl font-bold text-gray-900">ExamAI</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#features" class="text-gray-700 hover:text-blue-600 font-medium">Features</a>
+                    <a href="#pricing" class="text-gray-700 hover:text-blue-600 font-medium">Pricing</a>
+                    <a href="#" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-300">Get Pro</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="gradient-bg text-white py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-5xl md:text-6xl font-bold mb-6 animate-fade-in">
+                Generate Exam Papers<br>
+                <span class="text-blue-200">in Seconds</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-blue-100 mb-12 max-w-3xl mx-auto opacity-90">
+                Create professional exam papers with AI. Perfect for teachers, educators, and institutions.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-2xl mx-auto">
+                <button onclick="document.getElementById('generator').scrollIntoView({behavior: 'smooth'})" 
+                        class="bg-white text-blue-600 px-10 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+                    <i class="fas fa-magic mr-2"></i>Start Generating
+                </button>
+                <button class="border-2 border-white text-white px-10 py-4 rounded-xl font-semibold text-lg hover:bg-white hover:text-blue-600 transition-all duration-300">
+                    <i class="fas fa-play-circle mr-2"></i>Watch Demo
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Generator Section -->
+    <section id="generator" class="py-24 bg-white">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Create Your Perfect Exam</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">Fill in the details and let AI generate a professional exam paper instantly</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-12 items-start">
+                <!-- Form -->
+                <div class="space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                            <input type="text" id="subject" placeholder="Mathematics" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Class/Grade</label>
+                            <input type="text" id="grade" placeholder="10th Grade" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Topic</label>
+                        <input type="text" id="topic" placeholder="Algebra, Geometry, etc." 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2"># of Questions</label>
+                            <select id="numQuestions" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option>10</option>
+                                <option>15</option>
+                                <option>20</option>
+                                <option>25</option>
+                                <option>30</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
+                            <select id="difficulty" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option>Easy</option>
+                                <option>Medium</option>
+                                <option>Hard</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Question Types</label>
+                            <select id="questionType" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option>MCQ</option>
+                                <option>Short Answer</option>
+                                <option>Long Answer</option>
+                                <option>Mixed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button onclick="generateExam()" 
+                            class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-5 px-8 rounded-2xl font-bold text-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center">
+                        <i class="fas fa-magic mr-3 text-xl"></i>
+                        <span id="generateText">Generate Exam Paper</span>
+                    </button>
+                </div>
+
+                <!-- Preview Card -->
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-8 h-fit sticky top-24">
+                    <div class="text-center mb-8">
+                        <i class="fas fa-file-alt text-4xl text-blue-600 mb-4"></i>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Exam Preview</h3>
+                        <p class="text-gray-600">Your generated exam will appear here</p>
+                    </div>
+                    <div id="previewContent" class="text-center py-20">
+                        <i class="fas fa-sparkles text-6xl text-blue-300 mb-6 animate-pulse"></i>
+                        <p class="text-2xl font-semibold text-gray-500">Ready to generate your first exam?</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Exam Paper Display (Hidden initially) -->
+    <div id="examPaper" class="no-print hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="closeExam()">
+        <div class="exam-paper w-full max-w-4xl mx-auto relative" onclick="event.stopPropagation()">
+            <div class="no-print absolute top-4 right-4 flex gap-2">
+                <button onclick="printExam()" class="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition-all">
+                    <i class="fas fa-print"></i>
+                </button>
+                <button onclick="downloadExam()" class="bg-green-600 text-white p-3 rounded-xl hover:bg-green-700 transition-all">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button onclick="closeExam()" class="bg-gray-600 text-white p-3 rounded-xl hover:bg-gray-700 transition-all">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="generatedExamContent"></div>
+        </div>
+    </div>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-24 bg-gradient-to-b from-gray-50 to-white">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Simple Pricing</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">Choose the plan that works best for you</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- Free Plan -->
+                <div class="bg-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-gray-100 hover:border-blue-200">
+                    <div class="text-center mb-8">
+                        <div class="w-20 h-20 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-crown text-2xl text-blue-600"></i>
+                        </div>
+                        <h3 class="text-3xl font-bold text-gray-900 mb-2">Free</h3>
+                        <p class="text-4xl font-bold text-blue-600 mb-2">₹0</p>
+                        <p class="text-gray-500">Forever</p>
+                    </div>
+                    <ul class="space-y-4 mb-8 text-left">
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 mr-3"></i>3 Papers per day</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 mr-3"></i>Basic question types</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 mr-3"></i>Print & Download</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 mr-3"></i>Email support</li>
+                    </ul>
+                    <button class="w-full bg-blue-600 text-white py-4 px-8 rounded-2xl font-bold hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                        Get Started Free
+                    </button>
+                </div>
+
+                <!-- Pro Plan -->
+                <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl p-8 shadow-2xl text-white relative overflow-hidden">
+                    <div class="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+                    <div class="relative">
+                        <div class="text-center mb-8">
+                            <div class="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <i class="fas fa-infinity text-2xl"></i>
+                            </div>
+                            <h3 class="text-3xl font-bold mb-2">Pro</h3>
+                            <div class="flex items-baseline justify-center">
+                                <span class="text-4xl font-bold">₹99</span>
+                                <span class="text-xl ml-2">/month</span>
+                            </div>
+                            <p class="opacity-90">Billed annually</p>
+                        </div>
+                        <ul class="space-y-4 mb-8 text-left">
+                            <li class="flex items-center"><i class="fas fa-check text-green-400 mr-3"></i>Unlimited papers</li>
+                            <li class="flex items-center"><i class="fas fa-check text-green-400 mr-3"></i>All question types</li>
+                            <li class="flex items-center"><i class="fas fa-check text-green-400 mr-3"></i>Custom branding</li>
+                            <li class="flex items-center"><i class="fas fa-check text-green-400 mr-3"></i>Priority support</li>
+                            <li class="flex items-center"><i class="fas fa-check text-green-400 mr-3"></i>Advanced analytics</li>
+                        </ul>
+                        <button class="w-full bg-white text-blue-600 py-4 px-8 rounded-2xl font-bold text-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+                            Get Pro Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="flex items-center justify-center mb-8">
+                <i class="fas fa-brain text-3xl text-blue-400 mr-4"></i>
+                <span class="text-2xl font-bold">ExamAI</span>
+            </div>
+            <p class="text-gray-400 mb-8 max-w-2xl mx-auto">
+                Generate professional exam papers instantly with AI. Save time and create better assessments.
+            </p>
+            <div class="flex flex-wrap justify-center gap-6 text-gray-400">
+                <a href="#" class="hover:text-white transition">Privacy</a>
+                <a href="#" class="hover:text-white transition">Terms</a>
+                <a href="#" class="hover:text-white transition">Support</a>
+                <a href="#" class="hover:text-white transition">Contact</a>
+            </div>
+            <p class="mt-8 text-sm text-gray-500">&copy; 2024 ExamAI. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Sample question data
+        const questionTemplates = {
+            MCQ: [
+                "What is the value of x in the equation 2x + 5 = 15?",
+                "Which of the following is a prime number?",
+                "Solve for y: 3y - 7 = 14",
+                "What is the area of a triangle with base 10cm and height 5cm?",
+                "Identify the correct factorization of 12x² + 8x."
+            ],
+            'Short Answer': [
+                "Define photosynthesis and explain its importance.",
+                "Solve the quadratic equation x² - 5x + 6 = 0.",
+                "Explain the Pythagorean theorem with an example.",
+                "What are the properties of parallelograms?",
+                "Calculate the compound interest on ₹10,000 at 5% for 2 years."
+            ],
+            'Long Answer': [
+                "Explain the water cycle with a detailed diagram.",
+                "Prove that the sum of angles in a triangle is 180 degrees.",
+                "Discuss the applications of trigonometry in real life.",
+                "Derive the formula for the area of a circle.",
+                "Explain the concept of probability with examples."
+            ]
+        };
+
+        function generateExam() {
+            const subject = document.getElementById('subject').value || 'Mathematics';
+            const grade = document.getElementById('grade').value || '10th Grade';
+            const topic = document.getElementById('topic').value || 'General';
+            const numQuestions = parseInt(document.getElementById('numQuestions').value);
+            const difficulty = document.getElementById('difficulty').value;
+            const questionType = document.getElementById('questionType').value;
+
+            // Show loading
+            const generateBtn = document.querySelector('#generateText');
+            generateBtn.textContent = 'Generating...';
+            document.body.style.overflow = 'hidden';
+
+            setTimeout(() => {
+                const questions = generateQuestions(numQuestions, questionType, difficulty);
+                displayExamPaper(subject, grade, topic, questions);
+                generateBtn.textContent = 'Generate Exam Paper';
+                document.body.style.overflow = 'auto';
+            }, 2000);
+        }
+
+        function generateQuestions(count, type, difficulty) {
+            const templates = questionTemplates[type] || questionTemplates.MCQ;
+            const questions = [];
+            
+            for(let i = 1; i <= count; i++) {
+                const template = templates[Math.floor(Math.random() * templates.length)];
+                const marks = type === 'MCQ' ? 2 : type === 'Short Answer' ? 4 : 8;
+                
+                questions.push({
+                    number: i,
+                    text: template,
+                    type: type,
+                    marks: marks,
+                    options: type === 'MCQ' ? generateMCQOptions(template) : null
+                });
+            }
+            return questions;
+        }
+
+        function generateMCQOptions(question) {
+            const options = ['A) 5', 'B) 10', 'C) 15', 'D) 20'];
+            return options.sort(() => Math.random() - 0.5);
+        }
+
+        function displayExamPaper(subject, grade, topic, questions) {
+            const totalMarks = questions.reduce((sum, q) => sum + q.marks, 0);
+            const examContent = `
+                <div class="p-12">
+                    <!-- School Header -->
+                    <div class="text-center border-b-4 border-blue-600 pb-8 mb-12">
+                        <div class="flex items-center justify-center mb-6">
+                            <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mr-6">
+                                <i class="fas fa-school text-3xl text-white"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-4xl font-bold text-gray-900">ABC INTERNATIONAL SCHOOL</h1>
+                                <p class="text-xl text-gray-600 mt-1">Affiliated to CBSE, New Delhi</p>
+                            </div>
+                        </div>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-2">${grade} ${subject} Exam</h2>
+                        <p class="text-xl text-gray-600 mb-1">Topic: ${topic}</p>
+                        <p class="text-lg text-gray-600">Time: 3 Hours &nbsp;&nbsp;&nbsp;&nbsp; Maximum Marks: ${totalMarks}</p>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="bg-blue-50 border-l-8 border-blue-500 p-8 rounded-xl mb-12">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4">Instructions:</h3>
+                        <ul class="space-y-2 text-lg">
+                            <li>• Attempt all questions</li>
+                            <li>• Write answers clearly and neatly</li>
+                            <li>• Diagrams should be drawn to scale where necessary</li>
+                            <li>• Show all working steps for full credit</li>
+                        </ul>
+                    </div>
+
+                    <!-- Questions -->
+                    <div class="space-y-8">
+                        ${questions.map(q => `
+                            <div class="question-item border-l-4 border-blue-400 pl-8 pb-6">
+                                <div class="flex justify-between items-start mb-4">
+                                    <h3 class="text-2xl font-bold text-gray-900">Q${q.number}. ${q.text}</h3>
+                                    <span class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">[${q.marks} Marks]</span>
+                                </div>
+                                
+                                ${q.options ? `
+                                    <div class="space-y-3 ml-6">
+                                        ${q.options.map(option => `
+                                            <label class="flex items-center p-3 bg-white border rounded-xl hover:shadow-md transition-all cursor-pointer">
+                                                <input type="radio" name="q${q.number}" class="mr-4 text-blue-600 w-5 h-5">
+                                                <span class="font-medium">${option}</span>
+                                            </label>
+                                        `).join('')}
+                                    </div>
+                                ` : `
+                                    <div class="bg-gray-50 p-6 rounded-xl border-2 border-dashed border-gray-300 min-h-[120px] mt-4">
+                                        <p class="text-gray-500 italic text-center pt-8">Write your answer here...</p>
+                                    </div>
+                                `}
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="mt-20 pt-12 border-t-4 border-gray-300 text-center">
+                        <p class="text-xl font-bold text-gray-700 mb-4">Best of Luck!</p>
+                        <p class="text-gray-600">ABC International School</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('generatedExamContent').innerHTML = examContent;
+            document.getElementById('examPaper').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeExam() {
+            document.getElementById('examPaper').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function printExam() {
+            window.print();
+        }
+
+        function downloadExam() {
+            const examContent = document.getElementById('generatedExamContent').innerHTML;
+            const win = window.open('', '_blank');
+            win.document.write(`
+                <html>
+                    <head>
+                        <title>Exam Paper</title>
+                        <style>
+                            body { font-family: 'Inter', sans-serif; margin: 0; padding: 40px; }
+                            @media print { body { padding: 0; } }
+                        </style>
+                    </head>
+                    <body>${examContent}</body>
+                </html>
+            `);
+            win.document.close();
+            win.print();
+        }
+
+        // Animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.animate-on-scroll').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'all 0.6s ease';
+            observer.observe(el);
+        });
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
