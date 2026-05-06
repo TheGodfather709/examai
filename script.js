@@ -213,55 +213,53 @@ async function generateWithOpenAI(prompt, count, subject, topic, difficulty, mar
 }
 // Google Gemini API Call (Fixed & Robust Version)
 async function generateWithGemini(prompt, count, subject, topic, difficulty, marksPerQuestion, types) {
-    // Hum direct v1 try karenge pehle, kyunki flash wahan stable hai
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_CONFIG.apiKey}`;
+    // Ye list try karega ek-ek karke jab tak ek chal na jaye
+    const modelsToTry = [
+        "gemini-1.5-flash",
+        "gemini-1.5-pro",
+        "gemini-pro"
+    ];
 
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            contents: [{
-                parts: [{ text: prompt }]
-            }]
-        })
-    });
+    let lastError = null;
 
-    if (!response.ok) {
-        const error = await response.json();
-        // Agar v1 fail hota hai, toh hum purana pro model try kar sakte hain backup ke liye
-        throw new Error(`Gemini Error: ${error.error?.message || 'Unknown error'}`);
+    for (let modelName of modelsToTry) {
+        try {
+            console.log(`Trying model: ${modelName}...`);
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_CONFIG.apiKey}`;
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                let content = data.candidates[0].content.parts[0].text;
+                content = content.replace(/```json/g, '').replace(/```/g, '').trim();
+                
+                const questionsData = JSON.parse(content);
+                console.log(`✅ Success with ${modelName}!`);
+                return questionsData.map((q, index) => ({
+                    id: index + 1,
+                    text: q.text,
+                    type: q.type || types[index % types.length],
+                    difficulty: difficulty,
+                    marks: marksPerQuestion,
+                    subject: subject,
+                    topic: topic,
+                    options: q.options || []
+                }));
+            }
+        } catch (e) {
+            lastError = e;
+            continue; // Fail hua toh agla model try karo
+        }
     }
-
-    const data = await response.json();
-    
-    if (!data.candidates || data.candidates.length === 0) {
-        throw new Error('No response from AI. Please try again.');
-    }
-
-    let content = data.candidates[0].content.parts[0].text;
-    
-    // Cleaning backticks
-    content = content.replace(/```json/g, '').replace(/```/g, '').trim();
-    
-    try {
-        const questionsData = JSON.parse(content);
-        return questionsData.map((q, index) => ({
-            id: index + 1,
-            text: q.text,
-            type: q.type || types[index % types.length],
-            difficulty: difficulty,
-            marks: marksPerQuestion,
-            subject: subject,
-            topic: topic,
-            options: q.options || []
-        }));
-    } catch (e) {
-        throw new Error('Failed to parse AI response. Received: ' + content.substring(0, 100));
-    }
+    throw new Error("Bhai, saare models fail ho gaye. Check karo API Key valid hai ya nahi.");
 }
-
 // Hugging Face API Call
 async function generateWithHuggingFace(prompt, count, subject, topic, difficulty, marksPerQuestion, types) {
     const response = await fetch('https://api-inference.huggingface.co/v1/chat/completions', {
