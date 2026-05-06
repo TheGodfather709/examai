@@ -213,52 +213,50 @@ async function generateWithOpenAI(prompt, count, subject, topic, difficulty, mar
 }
 // Google Gemini API Call (Fixed & Robust Version)
 async function generateWithGemini(prompt, count, subject, topic, difficulty, marksPerQuestion, types) {
-    // Ye list try karega ek-ek karke jab tak ek chal na jaye
-    const modelsToTry = [
-        "gemini-1.5-flash",
-        "gemini-1.5-pro",
-        "gemini-pro"
-    ];
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_CONFIG.apiKey}`;
 
-    let lastError = null;
+    const requestBody = {
+        contents: [{
+            parts: [{
+                text: prompt
+            }]
+        }]
+    };
 
-    for (let modelName of modelsToTry) {
-        try {
-            console.log(`Trying model: ${modelName}...`);
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_CONFIG.apiKey}`;
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
 
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
-            });
+        const data = await response.json();
 
-            if (response.ok) {
-                const data = await response.json();
-                let content = data.candidates[0].content.parts[0].text;
-                content = content.replace(/```json/g, '').replace(/```/g, '').trim();
-                
-                const questionsData = JSON.parse(content);
-                console.log(`✅ Success with ${modelName}!`);
-                return questionsData.map((q, index) => ({
-                    id: index + 1,
-                    text: q.text,
-                    type: q.type || types[index % types.length],
-                    difficulty: difficulty,
-                    marks: marksPerQuestion,
-                    subject: subject,
-                    topic: topic,
-                    options: q.options || []
-                }));
-            }
-        } catch (e) {
-            lastError = e;
-            continue; // Fail hua toh agla model try karo
+        if (!response.ok) {
+            console.error("Gemini Details:", data);
+            throw new Error(data.error?.message || "Status 400: Request Format Issue");
         }
+
+        let content = data.candidates[0].content.parts[0].text;
+        content = content.replace(/```json/g, '').replace(/```/g, '').trim();
+        
+        const questionsData = JSON.parse(content);
+        return questionsData.map((q, index) => ({
+            id: index + 1,
+            text: q.text,
+            options: q.options || [],
+            type: q.type || types[0],
+            difficulty: difficulty,
+            marks: marksPerQuestion,
+            subject: subject,
+            topic: topic
+        }));
+    } catch (e) {
+        console.error("Final Error Trace:", e);
+        throw e;
     }
-    throw new Error("Bhai, saare models fail ho gaye. Check karo API Key valid hai ya nahi.");
 }
 // Hugging Face API Call
 async function generateWithHuggingFace(prompt, count, subject, topic, difficulty, marksPerQuestion, types) {
