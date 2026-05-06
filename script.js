@@ -13,7 +13,7 @@ const API_CONFIG = {
     apiKey: 'AIzaSyBge2mmJu7ndKa2rv1OnIjK0lp-kvfEK7M', // Set in browser console: window.setAPIKey('your-key')
     baseURL: {
         openai: 'https://api.openai.com/v1',
-        gemini: 'https://generativelanguage.googleapis.com/v1',
+        gemini: 'https://generativelanguage.googleapis.com/v1beta',
         huggingface: 'https://api-inference.huggingface.co/v1'
     }
 };
@@ -211,32 +211,37 @@ async function generateWithOpenAI(prompt, count, subject, topic, difficulty, mar
         throw new Error('Failed to parse AI response. Received: ' + content.substring(0, 200));
     }
 }
-
-// Google Gemini API Call
+// Google Gemini API Call (Fixed Version)
 async function generateWithGemini(prompt, count, subject, topic, difficulty, marksPerQuestion, types) {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_CONFIG.apiKey}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            contents: [{
-                parts: [{ text: prompt }]
-            }]
-        })
-    });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Gemini Error: ${error.error?.message || 'Unknown error'}`);
-    }
-
-    const data = await response.json();
-    const content = data.candidates[0].content.parts[0].text;
-    
-    console.log('📥 Raw response:', content.substring(0, 200) + '...');
-    
     try {
+       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_CONFIG.apiKey}`, { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{ text: prompt }]
+                }]
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(`Gemini Error: ${error.error?.message || 'Unknown error'}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.candidates || data.candidates.length === 0) {
+            throw new Error('Gemini did not return any results. Check your API key.');
+        }
+
+        let content = data.candidates[0].content.parts[0].text;
+        
+        // Clean markdown backticks if AI adds them
+        content = content.replace(/```json/g, '').replace(/```/g, '').trim();
+        
         const questionsData = JSON.parse(content);
         return questionsData.map((q, index) => ({
             id: index + 1,
@@ -249,10 +254,11 @@ async function generateWithGemini(prompt, count, subject, topic, difficulty, mar
             options: q.options || []
         }));
     } catch (e) {
-        console.error('Parse error:', e);
-        throw new Error('Failed to parse AI response. Received: ' + content.substring(0, 200));
+        console.error('Gemini Error:', e);
+        throw e;
     }
 }
+
 
 // Hugging Face API Call
 async function generateWithHuggingFace(prompt, count, subject, topic, difficulty, marksPerQuestion, types) {
