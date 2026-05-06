@@ -13,7 +13,7 @@ const API_CONFIG = {
     apiKey: 'AIzaSyBge2mmJu7ndKa2rv1OnIjK0lp-kvfEK7M', // Set in browser console: window.setAPIKey('your-key')
     baseURL: {
         openai: 'https://api.openai.com/v1',
-        gemini: 'https://generativelanguage.googleapis.com/v1beta',
+        gemini: 'https://generativelanguage.googleapis.com/v1',
         huggingface: 'https://api-inference.huggingface.co/v1'
     }
 };
