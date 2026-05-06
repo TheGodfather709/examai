@@ -214,7 +214,7 @@ async function generateWithOpenAI(prompt, count, subject, topic, difficulty, mar
 
 // Google Gemini API Call
 async function generateWithGemini(prompt, count, subject, topic, difficulty, marksPerQuestion, types) {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_CONFIG.apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_CONFIG.apiKey}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
