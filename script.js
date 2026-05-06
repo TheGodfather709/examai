@@ -10,7 +10,7 @@ const navMenu = document.getElementById('navMenu');
 // API Configuration (Add your API key)
 const API_CONFIG = {
     provider: 'gemini', // or 'gemini' or 'huggingface'
-    apiKey: 'AIzaSyC2M9b3pdCNhAPks5mtZYTEdbfL-7iHKBs', // Set in browser console: window.setAPIKey('your-key')
+    apiKey: 'AIzaSyBge2mmJu7ndKa2rv1OnIjK0lp-kvfEK7M', // Set in browser console: window.setAPIKey('your-key')
     baseURL: {
         openai: 'https://api.openai.com/v1',
         gemini: 'https://generativelanguage.googleapis.com/v1beta',
@@ -214,7 +214,7 @@ async function generateWithOpenAI(prompt, count, subject, topic, difficulty, mar
 
 // Google Gemini API Call
 async function generateWithGemini(prompt, count, subject, topic, difficulty, marksPerQuestion, types) {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_CONFIG.apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_CONFIG.apiKey}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
