@@ -212,39 +212,33 @@ async function generateWithOpenAI(prompt, count, subject, topic, difficulty, mar
     }
 }
 // Google Gemini API Call (Fixed & Robust Version)
-async function generateWithGemini(prompt, count, subject, topic, difficulty, marksPerQuestion, types) {
-    // Stable v1 endpoint
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_CONFIG.apiKey}`;
-
-    const requestBody = {
-        contents: [{ parts: [{ text: prompt }] }]
-        // Humne generationConfig hata diya taaki "Unknown name" wala error na aaye
-    };
+async function generateWithGemini(prompt) {
+    // URL mein 'v1beta' use karenge taaki Flash model mil jaye
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_CONFIG.apiKey}`;
 
     try {
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
         });
 
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error?.message || "API Error");
+        
+        // Agar error aaye toh console mein dikhega
+        if (!response.ok) {
+            console.error("Gemini Error Details:", data);
+            throw new Error(data.error?.message || "API Error");
+        }
 
         let content = data.candidates[0].content.parts[0].text;
-        // Cleaning markdown
         content = content.replace(/```json/g, '').replace(/```/g, '').trim();
         
-        const questionsData = JSON.parse(content);
-        return questionsData.map((q, index) => ({
-            id: index + 1,
-            text: q.text,
-            options: q.options || [],
-            type: q.type || types[0],
-            difficulty, marks: marksPerQuestion, subject, topic
-        }));
+        return JSON.parse(content);
     } catch (e) {
-        console.error("Gemini Final Error:", e);
+        console.error("Final Debug:", e);
         throw e;
     }
 }
